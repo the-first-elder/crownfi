@@ -39,13 +39,13 @@ contract Wrapper is ERC1155 {
     // ERC721 interfaceId
     bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
 
-    function depositERC20(address erc20Token, uint256 amount, bytes memory data) public {
+    function depositERC20(address erc20Token, uint256 amount, bytes memory data) public returns(uint ERC1155TokenId) {
         require(_supportsERC20(erc20Token), "!ERC20Token");
         uint256 totalDeposited = totalERC20Deposited[erc20Token];
         IERC20 token = IERC20(erc20Token);
         string memory _uri = getBaseUriERC20(erc20Token);
 
-        uint256 ERC1155TokenId = ERC20UserToTokenId[msg.sender][erc20Token];
+        ERC1155TokenId = ERC20UserToTokenId[msg.sender][erc20Token];
         if (ERC1155TokenId == 0) {
             counter += 1;
             ERC20UserToTokenId[msg.sender][erc20Token] = counter;
@@ -68,13 +68,14 @@ contract Wrapper is ERC1155 {
         emit DepositERC20(msg.sender, erc20Token, amount, ERC1155TokenId); // Emit event
     }
 
-    function depositERC721(address erc721Token, uint256 tokenId, bytes memory data, string memory _uri) public {
+    function depositERC721(address erc721Token, uint256 tokenId, bytes memory data, string memory _uri) public returns(uint ERC1155TokenId) {
         require(_supportsERC721(erc721Token), "!ERC721Token");
 
         IERC721 nft = IERC721(erc721Token);
         nft.transferFrom(msg.sender, address(this), tokenId);
 
         counter += 1;
+        ERC1155TokenId = counter;
         ERC1155ToERC21TokenAddress[counter] = erc721Token;
 
         ERC721UserTo721Deposited[msg.sender][counter] = tokenId;
@@ -86,7 +87,7 @@ contract Wrapper is ERC1155 {
 
     function withdrawERC20(address erc20Token, uint256 amount) public {
         require(_supportsERC20(erc20Token), "!ERC20Token");
-        uint256 tokenId = getTokenID(msg.sender, erc20Token);
+        uint256 tokenId = getERC20TokenID(msg.sender, erc20Token);
         _burn(msg.sender, tokenId, amount);
         ERC20UserToAmount[msg.sender][tokenId] -= amount;
         IERC20(erc20Token).transfer(msg.sender, amount);
@@ -105,7 +106,7 @@ contract Wrapper is ERC1155 {
         emit WithdrawERC721(msg.sender, erc721Token, tokenId721, tokenId1155); // Emit event
     }
 
-    function getTokenID(address user, address _token) public view returns (uint256 tokenID) {
+    function getERC20TokenID(address user, address _token) public view returns (uint256 tokenID) {
         tokenID = ERC20UserToTokenId[user][_token];
         require(tokenID != 0, "UNREGISTERED_TOKEN");
         return tokenID;

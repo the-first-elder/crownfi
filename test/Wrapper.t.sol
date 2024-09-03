@@ -53,7 +53,7 @@ contract WrapperTest is Test, IERC1155Receiver, ERC165, IERC1363Receiver {
         // // user 1 deposits again..... to same token id
         wrapper.depositERC20(address(erc20), 0.3 ether, "");
         assertEq(wrapper.balanceOf(user1, 1), 0.8 ether);
-        assertEq(wrapper.getTokenID(user1, address(erc20)), 1);
+        assertEq(wrapper.getERC20TokenID(user1, address(erc20)), 1);
         assertEq(erc20.balanceOf(user1), 0.2 ether);
 
         // user 1 deposits another erc20 token...
@@ -62,7 +62,7 @@ contract WrapperTest is Test, IERC1155Receiver, ERC165, IERC1363Receiver {
         wrapper.depositERC20(address(erc20_v2), 0.5 ether, "");
         assertEq(wrapper.balanceOf(user1, 2), 0.5 ether);
         assertEq(erc20_v2.balanceOf(user1), 0.5 ether);
-        assertEq(wrapper.getTokenID(user1, address(erc20_v2)), 2);
+        assertEq(wrapper.getERC20TokenID(user1, address(erc20_v2)), 2);
         vm.stopPrank();
 
         vm.startPrank(user2);
@@ -71,7 +71,7 @@ contract WrapperTest is Test, IERC1155Receiver, ERC165, IERC1363Receiver {
         wrapper.depositERC20(address(erc20_v2), 0.5 ether, "");
         assertEq(wrapper.balanceOf(user2, 3), 0.5 ether);
         assertEq(erc20_v2.balanceOf(user2), 0.5 ether);
-        assertEq(wrapper.getTokenID(user2, address(erc20_v2)), 3);
+        assertEq(wrapper.getERC20TokenID(user2, address(erc20_v2)), 3);
         vm.stopPrank();
         console2.log(wrapper.balanceOf(user2, 3), erc20.balanceOf(user2), wrapper.uri(3));
     }
@@ -106,33 +106,36 @@ contract WrapperTest is Test, IERC1155Receiver, ERC165, IERC1363Receiver {
 
     function test_deposit_erc721_by_user() public {
         vm.startPrank(user1);
-        erc721.safeMint(user1);
+        erc721.safeMint(user1, "nft1");
         erc721.approve(address(wrapper), 0);
-        wrapper.depositERC721(address(erc721), 0, "", "the first nft");
+        uint num = wrapper.depositERC721(address(erc721), 0, "", erc721.tokenURI(0));
         assertEq(wrapper.balanceOf(user1, 1), 1);
         assertEq(erc721.balanceOf(address(wrapper)), 1);
-        assertEq(wrapper.uri(1), "the first nft");
+        assertEq(wrapper.uri(1), erc721.tokenURI(0));
         assertEq(erc721.ownerOf(0), address(wrapper));
+        console2.log("num",num);
 
         // user1 deposits another nft...
-        erc721.safeMint(user1);
+        erc721.safeMint(user1, "nft2");
         erc721.approve(address(wrapper), 1);
-        wrapper.depositERC721(address(erc721), 1, "", "the second nft");
+        num = wrapper.depositERC721(address(erc721), 1, "", erc721.tokenURI(1));
         assertEq(wrapper.balanceOf(user1, 2), 1);
         assertEq(erc721.balanceOf(address(wrapper)), 2);
-        assertEq(wrapper.uri(2), "the second nft");
+        assertEq(wrapper.uri(2), erc721.tokenURI(1));
         assertEq(erc721.ownerOf(1), address(wrapper));
+        console2.log("num",num);
+        
 
         vm.stopPrank();
-        // user 2 deposits another nft
+        // user 2 deposits another deployed nft
 
         vm.startPrank(user2);
-        erc721_v2.safeMint(user2);
+        erc721_v2.safeMint(user2, "nft3");
         erc721_v2.approve(address(wrapper), 0);
-        wrapper.depositERC721(address(erc721_v2), 0, "", "the third nft");
+        wrapper.depositERC721(address(erc721_v2), 0, "", erc721.tokenURI(0));
         assertEq(wrapper.balanceOf(user2, 3), 1);
         assertEq(erc721_v2.balanceOf(address(wrapper)), 1);
-        assertEq(wrapper.uri(3), "the third nft");
+        assertEq(wrapper.uri(3), erc721.tokenURI(0));
         assertEq(erc721_v2.ownerOf(0), address(wrapper));
     }
 
@@ -192,12 +195,12 @@ contract WrapperTest is Test, IERC1155Receiver, ERC165, IERC1363Receiver {
 
     function test_withdrawal_of_erc721() public {
         vm.startPrank(user1);
-        erc721.safeMint(user1);
+        erc721.safeMint(user1, "nft1");
         erc721.approve(address(wrapper), 0);
-        wrapper.depositERC721(address(erc721), 0, "", "the first nft");
+        wrapper.depositERC721(address(erc721), 0, "", erc721.tokenURI(0));
         assertEq(wrapper.balanceOf(user1, 1), 1);
         assertEq(erc721.balanceOf(address(wrapper)), 1);
-        assertEq(wrapper.uri(1), "the first nft");
+        assertEq(wrapper.uri(1), erc721.tokenURI(0));
         assertEq(erc721.ownerOf(0), address(wrapper));
 
         // withdrawal
@@ -209,14 +212,42 @@ contract WrapperTest is Test, IERC1155Receiver, ERC165, IERC1363Receiver {
 
     function test_cannot_withdraw_erc721_if_user_doesnt_deposit() public {
         vm.startPrank(user1);
-        erc721.safeMint(user1);
+        erc721.safeMint(user1, "nft1");
         erc721.approve(address(wrapper), 0);
-        wrapper.depositERC721(address(erc721), 0, "", "the first nft");
+        wrapper.depositERC721(address(erc721), 0, "", erc721.tokenURI(0));
         assertEq(wrapper.balanceOf(user1, 1), 1);
         assertEq(erc721.balanceOf(address(wrapper)), 1);
-        assertEq(wrapper.uri(1), "the first nft");
+        assertEq(wrapper.uri(1), erc721.tokenURI(0));
         assertEq(erc721.ownerOf(0), address(wrapper));
 
+        // withdrawal
+        vm.startPrank(user2);
+        vm.expectRevert();
+        wrapper.withdrawERC721(address(erc721), 1);
+    }
+    function test_cannot_withdraw_erc721_of_another_user() public {
+        vm.startPrank(user1);
+        erc721.safeMint(user1, "nft1");
+        erc721.approve(address(wrapper), 0);
+        wrapper.depositERC721(address(erc721), 0, "", erc721.tokenURI(0));
+        assertEq(wrapper.balanceOf(user1, 1), 1);
+        assertEq(erc721.balanceOf(address(wrapper)), 1);
+        assertEq(wrapper.uri(1), erc721.tokenURI(0));
+        assertEq(erc721.ownerOf(0), address(wrapper));
+        vm.stopPrank();
+
+          // user 2 deposits another nft
+
+        vm.startPrank(user2);
+        erc721.safeMint(user2, "nft3");
+        erc721.approve(address(wrapper), 1);
+        wrapper.depositERC721(address(erc721), 1, "", erc721.tokenURI(1));
+        assertEq(wrapper.balanceOf(user2, 2), 1);
+        assertEq(erc721.balanceOf(address(wrapper)), 2);
+        assertEq(wrapper.uri(2), erc721.tokenURI(1));
+        assertEq(erc721.ownerOf(1), address(wrapper));
+
+        
         // withdrawal
         vm.startPrank(user2);
         vm.expectRevert();

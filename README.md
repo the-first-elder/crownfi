@@ -1,66 +1,85 @@
-## Foundry
+Here's a comprehensive README that guides users through setting up and deploying contracts on a local blockchain using Anvil, running Forge scripts, and connecting the front-end with Ethers.js.
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+---
 
-Foundry consists of:
+# ERC20 and ERC1155 Wrapper Project
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+This project demonstrates how to deploy and interact with ERC20 and ERC721 contracts wrapped into an ERC1155 contract using Foundry and Ethers.js.
 
-## Documentation
+## Prerequisites
 
-https://book.getfoundry.sh/
+- Node.js and npm installed
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) installed
+- [Git](https://git-scm.com/) installed
 
-## Usage
+## Getting Started
 
-### Build
+### 1. Clone the Project
 
-```shell
-$ forge build
+```bash
+git clone https://github.com/the-first-elder/crownfi.git
 ```
 
-### Test
+### 2. Install Dependencies
 
-```shell
-$ forge test
+```bash
+forge install
 ```
 
-### Format
+### 3. Start a Local Blockchain with Anvil
 
-```shell
-$ forge fmt
+Start a local blockchain instance using Anvil:
+
+```bash
+anvil
 ```
 
-### Gas Snapshots
+This will spin up a local blockchain and provide you with a list of accounts and private keys. Note the private key of the first account, as you'll use it to deploy your contracts.
 
-```shell
-$ forge snapshot
+### 4. Deploy Contracts on the Local Blockchain
+
+Run the Forge script to deploy the contracts using the private key from Anvil:
+
+```bash
+forge script script/Wrapper.s.sol --broadcast --rpc-url http://127.0.0.1:8545 --private-key <YOUR_PRIVATE_KEY>
 ```
 
-### Anvil
+Replace `<YOUR_PRIVATE_KEY>` with the private key from Anvil.
 
-```shell
-$ anvil
+After deployment, you'll see the addresses of the deployed ERC20, ERC721, and ERC1155 wrapper contracts. Note these addresses as you'll need them to interact with the front end.
+
+### 5. Update `app.js` with Deployed Contract Addresses
+
+Open `app.js` and update the contract addresses and the private key from Anvil:
+
+```javascript
+const wrapperAddress = "<DEPLOYED_WRAPPER_CONTRACT_ADDRESS>";
+const privateKey = "<ANVIL_PRIVATE_KEY>";
 ```
 
-### Deploy
+### 6. Start the Front-End
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+Use a live server to start the HTML file and interact with the deployed contracts:
 
-### Cast
+1. Open the project in your preferred code editor (e.g., VSCode).
+2. Install the Live Server extension.
+3. Right-click on `index.html` and select "Open with Live Server."
 
-```shell
-$ cast <subcommand>
-```
+This will open the front end in your default browser.
 
-### Help
+### 7. Interact with the Contracts
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+You can now interact with the ERC20 and ERC721 contracts and see the results on the front end:
+
+- **Deposit ERC20:** Fill in the form with the ERC20 contract address, amount, and data, then submit.
+- **Deposit ERC721:** Fill in the form with the ERC721 contract address, token ID, and data, then submit.
+- **Get Token URI:** Input the token ID and retrieve the URI.
+
+### 8. Testing the Project
+
+If you want to test the project further, you can use the following commands:
+
+- Run tests: `forge test`
+- Check test coverage: `forge coverage`
+
+---

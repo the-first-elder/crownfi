@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ERC20 and ERC721 Wrapper</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <h1>ERC20 and ERC721 Wrapper</h1>
+
+    <!-- Form for Depositing ERC20 Tokens -->
+    <form id="erc20-deposit-form">
+      <h2>Deposit ERC20 Tokens</h2>
+
+      <label for="erc20-address">ERC20 Contract Address:</label>
+      <input
+        type="text"
+        id="erc20-address"
+        name="erc20-address"
+        placeholder="Enter ERC20 contract address"
+        required
+      />
+
+      <label for="erc20-amount">Amount to Deposit:</label>
+      <input
+        type="number"
+        id="erc20-amount"
+        name="erc20-amount"
+        placeholder="Enter amount to deposit"
+        required
+      />
+
+      <label for="erc20-data">Data (Optional):</label>
+      <input
+        type="text"
+        id="erc20-data"
+        name="erc20-data"
+        placeholder="Enter any additional data"
+      />
+
+      <input type="submit" value="Deposit ERC20" />
+    </form>
+
+    <!-- Withdraw ERC20 Form -->
+    <form id="withdrawERC20Form">
+      <h2>Withdraw ERC20</h2>
+      <label for="withdrawErc20Address">ERC20 Contract Address:</label>
+      <input type="text" id="withdrawErc20Address" required />
+      <label for="withdrawErc20Amount">Amount:</label>
+      <input type="number" id="withdrawErc20Amount" required />
+      <input type="submit" value="Withdraw ERC20">
+    </form>
+
+    <!-- Form for Depositing ERC721 Tokens -->
+    <form id="erc721-deposit-form">
+      <h2>Deposit ERC721 Tokens</h2>
+
+      <label for="erc721-address">ERC721 Contract Address:</label>
+      <input
+        type="text"
+        id="erc721-address"
+        name="erc721-address"
+        placeholder="Enter ERC721 contract address"
+        required
+      />
+
+      <label for="erc721-tokenId">Token ID:</label>
+      <input
+        type="number"
+        id="erc721-tokenId"
+        name="erc721-tokenId"
+        placeholder="Enter the token ID"
+        required
+      />
+
+      <label for="erc721-data">Data (Optional):</label>
+      <input
+        type="text"
+        id="erc721-data"
+        name="erc721-data"
+        placeholder="Enter any additional data"
+      />
+
+      <!-- <label for="erc721-metadata">Metadata:</label>
+        <input type="text" id="erc721-metadata" name="erc721-metadata" placeholder="Enter metadata for the token"> -->
+
+      <input type="submit" value="Deposit ERC721" />
+    </form>
+
+    <!-- Withdraw ERC721 Form -->
+    <form id="withdrawERC721Form">
+      <h2>Withdraw ERC721</h2>
+      <label for="withdrawErc721Address">ERC721 Contract Address:</label>
+      <input type="text" id="withdrawErc721Address" required />
+      <label for="withdrawErc721TokenId">Token ID:</label>
+      <input type="number" id="withdrawErc721TokenId" required />
+      <input type="submit" value="Withdraw ERC721" />
+    </form>
+
+    <!-- Form to View URI by Token ID -->
+    <form id="view-uri-form">
+      <h2>View Token URI</h2>
+
+      <label for="token-id">Token ID:</label>
+      <input
+        type="number"
+        id="token-id"
+        name="token-id"
+        placeholder="Enter the token ID"
+        required
+      />
+
+      <input type="submit" value="View URI" />
+    </form>
+    <script
+      src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
+      type="application/javascript"
+    ></script>
+    <script src="app.js"></script>
+  </body>
+</html>
