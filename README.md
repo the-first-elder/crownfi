@@ -1,7 +1,3 @@
-Here's a comprehensive README that guides users through setting up and deploying contracts on a local blockchain using Anvil, running Forge scripts, and connecting the front-end with Ethers.js.
-
----
-
 # ERC20 and ERC1155 Wrapper Project
 
 This project demonstrates how to deploy and interact with ERC20 and ERC721 contracts wrapped into an ERC1155 contract using Foundry and Ethers.js.

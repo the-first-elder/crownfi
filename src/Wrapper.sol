@@ -11,10 +11,6 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 
 contract Wrapper is ERC1155, IERC1363Receiver {
-    uint256 internal counter = 0; // Number of ERC20 or ERC721 tokens deposited
-    bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
-    bytes4 private constant _ERC1363_INTERFACE_ID = 0x5c60da1f;
-
     mapping(address user => mapping(address erc20Token => uint256 tokenId1155)) public ERC20UserToTokenId;
     mapping(uint256 tokenId1155 => address erc20Token) public ERC1155ToERC20Address;
     mapping(address user => mapping(uint256 tokenId => uint256 amountDeposited)) public ERC20UserToAmount;
@@ -26,7 +22,11 @@ contract Wrapper is ERC1155, IERC1363Receiver {
     mapping(uint256 tokenId1155 => uint256 tokenid721) public ERC1155_IdToERC721_Id;
     mapping(uint256 => string) private _tokenURIs;
 
+    uint256 internal counter = 0; // Number of ERC20 or ERC721 tokens deposited
+    bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
+    bytes4 private constant _ERC1363_INTERFACE_ID = 0x5c60da1f;
     // Events
+
     event DepositERC20(address indexed user, address indexed erc20Token, uint256 amount, uint256 indexed tokenId1155);
     event DepositERC721(
         address indexed user, address indexed erc721Token, uint256 tokenId721, uint256 indexed tokenId1155
