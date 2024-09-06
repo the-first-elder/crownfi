@@ -9,22 +9,21 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363.sol";
 
 contract Wrapper is ERC1155, IERC1363Receiver {
     mapping(address user => mapping(address erc20Token => uint256 tokenId1155)) public ERC20UserToTokenId;
     mapping(uint256 tokenId1155 => address erc20Token) public ERC1155ToERC20Address;
     mapping(address user => mapping(uint256 tokenId => uint256 amountDeposited)) public ERC20UserToAmount;
     mapping(address erc20tokens => uint256 totalDeposited) public totalERC20Deposited;
-
     mapping(uint256 tokenId => address erc721Token) public ERC1155ToERC21TokenAddress;
     mapping(address user => mapping(uint256 tokenId1155 => uint256 tokenid721)) public ERC721UserTo721Deposited;
-
     mapping(uint256 tokenId1155 => uint256 tokenid721) public ERC1155_IdToERC721_Id;
     mapping(uint256 => string) private _tokenURIs;
+    mapping(address user => bool tranfered) public userHasTransferred;
 
     uint256 internal counter = 0; // Number of ERC20 or ERC721 tokens deposited
     bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
-    bytes4 private constant _ERC1363_INTERFACE_ID = 0x5c60da1f;
     // Events
 
     event DepositERC20(address indexed user, address indexed erc20Token, uint256 amount, uint256 indexed tokenId1155);
@@ -55,14 +54,15 @@ contract Wrapper is ERC1155, IERC1363Receiver {
             ERC1155ToERC20Address[counter] = erc20Token;
             ERC1155TokenId = counter;
         }
-        token.transferFrom(user, address(this), amount);
+        // to prevent double deposit 1363...
+        if (!userHasTransferred[user]) token.transferFrom(user, address(this), amount);
 
         uint256 diff = token.balanceOf(address(this)) - totalDeposited;
         ERC20UserToAmount[user][ERC1155TokenId] += diff;
         totalERC20Deposited[erc20Token] += diff;
         mint(user, ERC1155TokenId, diff, data, _uri);
 
-        emit DepositERC20(msg.sender, erc20Token, amount, ERC1155TokenId); // Emit event
+        emit DepositERC20(msg.sender, erc20Token, amount, ERC1155TokenId);
     }
 
     function depositERC721(address erc721Token, uint256 tokenId, bytes memory data, string memory _uri)
@@ -82,7 +82,7 @@ contract Wrapper is ERC1155, IERC1363Receiver {
         ERC1155_IdToERC721_Id[counter] = tokenId;
         mint(msg.sender, counter, 1, data, _uri);
 
-        emit DepositERC721(msg.sender, erc721Token, tokenId, counter); // Emit event
+        emit DepositERC721(msg.sender, erc721Token, tokenId, counter);
     }
 
     function withdrawERC20(address erc20Token, uint256 amount) public {
@@ -92,7 +92,7 @@ contract Wrapper is ERC1155, IERC1363Receiver {
         ERC20UserToAmount[msg.sender][tokenId] -= amount;
         IERC20(erc20Token).transfer(msg.sender, amount);
 
-        emit WithdrawERC20(msg.sender, erc20Token, amount, tokenId); // Emit event
+        emit WithdrawERC20(msg.sender, erc20Token, amount, tokenId);
     }
 
     function withdrawERC721(address erc721Token, uint256 tokenId1155) public {
@@ -103,7 +103,7 @@ contract Wrapper is ERC1155, IERC1363Receiver {
         IERC721(tokenContract).transferFrom(address(this), msg.sender, tokenId721);
         delete ERC721UserTo721Deposited[msg.sender][tokenId1155];
 
-        emit WithdrawERC721(msg.sender, erc721Token, tokenId721, tokenId1155); // Emit event
+        emit WithdrawERC721(msg.sender, erc721Token, tokenId721, tokenId1155);
     }
 
     function getERC20TokenID(address user, address _token) public view returns (uint256 tokenID) {
@@ -128,7 +128,7 @@ contract Wrapper is ERC1155, IERC1363Receiver {
         _mint(to, tokenId, amount, data);
         setTokenURI(tokenId, tokenURI);
 
-        emit Mint(to, tokenId, amount, tokenURI); // Emit event
+        emit Mint(to, tokenId, amount, tokenURI);
     }
 
     // Function to set the URI for a specific token ID
@@ -161,20 +161,21 @@ contract Wrapper is ERC1155, IERC1363Receiver {
         }
     }
 
-    function onTransferReceived(address operator, address from, uint256 value, bytes memory data)
-        public
-        override
+    function onTransferReceived(address operator, address from, uint256 value, bytes calldata data)
+        external
         returns (bytes4)
     {
         require(isERC1363(msg.sender), "caller not 1363..");
-        depositERC20(operator, from, value, data);
+        userHasTransferred[from] = true;
+        depositERC20(operator, msg.sender, value, data);
+        userHasTransferred[from] = false;
         return this.onTransferReceived.selector;
     }
 
     // Function to check if the token contract supports ERC1363
     function isERC1363(address token) public view returns (bool) {
-        try IERC165(token).supportsInterface(_ERC1363_INTERFACE_ID) {
-            return IERC165(token).supportsInterface(_ERC1363_INTERFACE_ID);
+        try IERC165(token).supportsInterface(type(IERC1363).interfaceId) {
+            return IERC165(token).supportsInterface(type(IERC1363).interfaceId);
         } catch {
             return false;
         }

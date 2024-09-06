@@ -5,10 +5,7 @@ import {Wrapper} from "../src/Wrapper.sol";
 import {Test, console2} from "forge-std/Test.sol";
 import {MockERC20} from "../src/MockTokens/MockERC20.sol";
 import {MockERC721} from "../src/MockTokens/MockERC721.sol";
-// import {MOCK1363} from "../src/MockTokens/MOCK1363.sol";
-// import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-// import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-// import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
+import {MOCK1363} from "../src/MockTokens/MOCK1363.sol";
 
 contract WrapperTest is Test {
     Wrapper wrapper;
@@ -16,7 +13,7 @@ contract WrapperTest is Test {
     MockERC721 erc721;
     MockERC20 erc20_v2;
     MockERC721 erc721_v2;
-    // MOCK1363 mock1363;
+    MOCK1363 mock1363;
 
     address deployer = makeAddr("deployer");
     address user1 = makeAddr("user1");
@@ -30,7 +27,7 @@ contract WrapperTest is Test {
         erc20_v2 = new MockERC20();
         erc721 = new MockERC721();
         erc721_v2 = new MockERC721();
-        // mock1363= new MOCK1363();
+        mock1363 = new MOCK1363();
         vm.deal(address(this), 100 ether);
         vm.stopPrank();
     }
@@ -103,17 +100,20 @@ contract WrapperTest is Test {
         assertEq(erc20.balanceOf(user1), 0.5 ether);
     }
 
-    // function test_can_deposit_to_contracts_supporting_1363() public {
-    //     uint256 depositAmount = 0.5 ether;
+    function test_can_deposit_to_contracts_supporting_1363_and_withdraw() public {
+        uint256 depositAmount = 0.5 ether;
+        vm.startPrank(user1);
+        mock1363.freeMint(user1, 1 ether);
+        mock1363.transferAndCall(address(wrapper), depositAmount, "");
 
-    //     erc20.mint(address(this), 1 ether);
-    //     erc20.approve(address(wrapper), 1 ether);
-    //     wrapper.depositERC20(address(this),address(erc20), depositAmount, "");
+        assertEq(mock1363.balanceOf(user1), 0.5 ether);
+        assertEq(wrapper.balanceOf(user1, 1), depositAmount);
 
-    //     console2.log(wrapper.balanceOf(address(this), 1), erc20.balanceOf(address(this)), wrapper.uri(1));
-    //     assertEq(wrapper.balanceOf(address(this), 1), depositAmount);
-    //     assertEq(erc20.balanceOf(address(this)), 0.5 ether);
-    // }
+        wrapper.withdrawERC20(address(mock1363), depositAmount);
+        assertEq(mock1363.balanceOf(user1), 1 ether);
+        assertEq(wrapper.balanceOf(user1, 1), 0);
+        console2.log(wrapper.uri(1));
+    }
 
     function test_deposit_erc721_should_fail_if_not_erc721token(uint256 amount) public {
         vm.expectRevert(bytes("!ERC721Token"));
