@@ -10,8 +10,11 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 
-contract Wrapper is ERC1155 {
+contract Wrapper is ERC1155, IERC1363Receiver {
     uint256 internal counter = 0; // Number of ERC20 or ERC721 tokens deposited
+    bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
+    bytes4 private constant _ERC1363_INTERFACE_ID = 0x5c60da1f;
+
     mapping(address user => mapping(address erc20Token => uint256 tokenId1155)) public ERC20UserToTokenId;
     mapping(uint256 tokenId1155 => address erc20Token) public ERC1155ToERC20Address;
     mapping(address user => mapping(uint256 tokenId => uint256 amountDeposited)) public ERC20UserToAmount;
@@ -36,39 +39,36 @@ contract Wrapper is ERC1155 {
 
     constructor() ERC1155("uri") {}
 
-    // ERC721 interfaceId
-    bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
-
-    function depositERC20(address erc20Token, uint256 amount, bytes memory data) public returns(uint ERC1155TokenId) {
+    function depositERC20(address user, address erc20Token, uint256 amount, bytes memory data)
+        public
+        returns (uint256 ERC1155TokenId)
+    {
         require(_supportsERC20(erc20Token), "!ERC20Token");
         uint256 totalDeposited = totalERC20Deposited[erc20Token];
         IERC20 token = IERC20(erc20Token);
         string memory _uri = getBaseUriERC20(erc20Token);
 
-        ERC1155TokenId = ERC20UserToTokenId[msg.sender][erc20Token];
+        ERC1155TokenId = ERC20UserToTokenId[user][erc20Token];
         if (ERC1155TokenId == 0) {
             counter += 1;
-            ERC20UserToTokenId[msg.sender][erc20Token] = counter;
+            ERC20UserToTokenId[user][erc20Token] = counter;
             ERC1155ToERC20Address[counter] = erc20Token;
             ERC1155TokenId = counter;
         }
-        uint256 toMint = amount;
+        token.transferFrom(user, address(this), amount);
 
-        if (totalDeposited < token.balanceOf(address(this))) {
-            uint256 diff = token.balanceOf(address(this)) - totalDeposited;
-            ERC20UserToAmount[msg.sender][ERC1155TokenId] += amount + diff;
-            toMint = amount + diff;
-        } else {
-            ERC20UserToAmount[msg.sender][ERC1155TokenId] += amount;
-        }
-        token.transferFrom(msg.sender, address(this), amount);
-        totalERC20Deposited[erc20Token] += toMint;
-        mint(msg.sender, ERC1155TokenId, toMint, data, _uri);
+        uint256 diff = token.balanceOf(address(this)) - totalDeposited;
+        ERC20UserToAmount[user][ERC1155TokenId] += diff;
+        totalERC20Deposited[erc20Token] += diff;
+        mint(user, ERC1155TokenId, diff, data, _uri);
 
         emit DepositERC20(msg.sender, erc20Token, amount, ERC1155TokenId); // Emit event
     }
 
-    function depositERC721(address erc721Token, uint256 tokenId, bytes memory data, string memory _uri) public returns(uint ERC1155TokenId) {
+    function depositERC721(address erc721Token, uint256 tokenId, bytes memory data, string memory _uri)
+        public
+        returns (uint256 ERC1155TokenId)
+    {
         require(_supportsERC721(erc721Token), "!ERC721Token");
 
         IERC721 nft = IERC721(erc721Token);
@@ -128,16 +128,6 @@ contract Wrapper is ERC1155 {
         _mint(to, tokenId, amount, data);
         setTokenURI(tokenId, tokenURI);
 
-        // If the receiver is a contract, handle ERC1363 logic
-        if (isContract(to)) {
-            try IERC1363Receiver(to).onTransferReceived(msg.sender, msg.sender, amount, data) returns (bytes4 response)
-            {
-                require(response == IERC1363Receiver.onTransferReceived.selector, "ERC1363: transfer rejected");
-            } catch {
-                // Do nothing...
-            }
-        }
-
         emit Mint(to, tokenId, amount, tokenURI); // Emit event
     }
 
@@ -171,8 +161,23 @@ contract Wrapper is ERC1155 {
         }
     }
 
-    function isContract(address account) internal view returns (bool) {
-        return account.code.length > 0;
+    function onTransferReceived(address operator, address from, uint256 value, bytes memory data)
+        public
+        override
+        returns (bytes4)
+    {
+        require(isERC1363(msg.sender), "caller not 1363..");
+        depositERC20(operator, from, value, data);
+        return this.onTransferReceived.selector;
+    }
+
+    // Function to check if the token contract supports ERC1363
+    function isERC1363(address token) public view returns (bool) {
+        try IERC165(token).supportsInterface(_ERC1363_INTERFACE_ID) {
+            return IERC165(token).supportsInterface(_ERC1363_INTERFACE_ID);
+        } catch {
+            return false;
+        }
     }
 
     receive() external payable {

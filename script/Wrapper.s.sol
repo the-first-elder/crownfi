@@ -9,10 +9,11 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 
-contract DeployWrapper is Script{
+contract DeployWrapper is Script {
     Wrapper wrapper;
     MockERC20 erc20;
     MockERC721 erc721;
+
     function run() public {
         vm.startBroadcast();
         wrapper = new Wrapper();

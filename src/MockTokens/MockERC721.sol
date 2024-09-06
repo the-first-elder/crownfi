@@ -6,14 +6,12 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 
-contract MockERC721 is ERC721, ERC721URIStorage, ERC721Burnable{
+contract MockERC721 is ERC721, ERC721URIStorage, ERC721Burnable {
     uint256 private _nextTokenId;
 
-    constructor()
-        ERC721("MyToken", "MTK")
-    {}
+    constructor() ERC721("MyToken", "MTK") {}
 
-    function safeMint(address to, string memory uri) public  {
+    function safeMint(address to, string memory uri) public {
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
@@ -21,21 +19,11 @@ contract MockERC721 is ERC721, ERC721URIStorage, ERC721Burnable{
 
     // The following functions are overrides required by Solidity.
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721URIStorage) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
