@@ -98,6 +98,10 @@ contract WrapperTest is Test {
         console2.log(wrapper.balanceOf(user1, 1), erc20.balanceOf(user1), wrapper.uri(1));
         assertEq(wrapper.balanceOf(user1, 1), initialMintAmount + userDepositAmount);
         assertEq(erc20.balanceOf(user1), 0.5 ether);
+
+        wrapper.withdrawERC20(address(erc20), initialMintAmount + userDepositAmount);
+        assertEq(wrapper.balanceOf(user1, 1), 0);
+        assertEq(erc20.balanceOf(user1), 2 ether);
     }
 
     function test_can_deposit_to_contracts_supporting_1363_and_withdraw() public {

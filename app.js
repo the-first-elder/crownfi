@@ -1,7 +1,10 @@
 document.addEventListener("DOMContentLoaded", async function () {
   const provider = new ethers.providers.JsonRpcProvider(
     "http://127.0.0.1:8545"
-  ); // Connect to local blockchain
+  );
+  const privateKey = ""; // Replace with local private key FROM ANVIL
+  const signer = new ethers.Wallet(privateKey, provider);
+
   const erc20Data = await fetch("./out/MockERC20.sol/MockERC20.json");
   const contractData = await erc20Data.json();
   const erc20abi = contractData.abi;
@@ -18,10 +21,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const response = await warpperData.json();
   const warpperabi = response.abi;
 
-  const privateKey = ""; // Replace with local private key FROM ANVIL
-
   // Create a signer using the private key
-  const signer = new ethers.Wallet(privateKey, provider);
   const wrapperAddress = "0x0165878A594ca255338adfa4d48449f69242Eb8F"; // Replace with your wrapper contract address
 
   const wrapperContract = new ethers.Contract(
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       );
       await tx.wait();
       console.log("ERC20 approved for transfer:", tx.hash);
-      console.log(signer.getAddress());
+      // console.log(signer.getAddress());
       const mintx = await erc20Contract.mint(signer.getAddress(), erc20Amount);
       await mintx.wait();
       console.log("ERC20 minted:", mintx.hash);
@@ -59,7 +59,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         erc20Data
       );
       const receipt = await depositERC20.wait();
-      console.log(receipt); // shoudl return a value...
       console.log("ERC1155 id:", receipt.events[1].args.id.toString());
     } catch (err) {
       console.error("Error approving ERC20:", err);
@@ -79,8 +78,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const tx = await wrapperContract.withdrawERC20(erc20Address, erc20Amount);
       await tx.wait();
-      // const txx = await wrapperContract.balanceOf(signer.getAddress(), 0);
-      // await txx.wait();
       console.log("ERC20 Withdrawal Successful", tx.hash);
     } catch (error) {
       console.error("Error withdrawing ERC20:", error);
@@ -95,8 +92,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const erc721Address = document.getElementById("erc721-address").value;
     const erc721TokenId = document.getElementById("erc721-tokenId").value;
     const erc721Data = document.getElementById("erc721-data").value || "0x";
-    // const erc721Metadata =
-    //   document.getElementById("erc721-metadata").value || "";
     const erc721Contract = new ethers.Contract(
       erc721Address,
       erc721abi,
@@ -113,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const mintx = await erc721Contract.safeMint(
         signer.getAddress(),
         "nft uri"
-      ); //minting nft
+      );
       await mintx.wait();
       console.log("ERC721 minted:", mintx.hash);
       const tokenURI = await erc721Contract.tokenURI(erc721TokenId);
@@ -126,17 +121,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         erc721Address,
         erc721TokenId,
         erc721Data,
-        tokenURI // an nft metadata for 1155 can be passed here...
+        tokenURI // a modified metadata for 1155 passed here...
       );
       const receipt = await depositERC721.wait();
-      // console.log(receipt); // shoudl return a value...
       console.log("erc1155 ID:", receipt.events[1].args.id.toString());
     } catch (err) {
       console.error("Error approving ERC721:", err);
     }
   });
 
-  // form for withdrawing erc721
+  // FORM for withdrawing erc721
   const withdrawERC721Form = document.getElementById("withdrawERC721Form");
   withdrawERC721Form.addEventListener("submit", async function (event) {
     event.preventDefault();
