@@ -40,20 +40,13 @@ Run the Forge script to deploy the contracts using the private key from Anvil:
 forge script script/Wrapper.s.sol --broadcast --rpc-url http://127.0.0.1:8545 --private-key <YOUR_PRIVATE_KEY>
 ```
 
-Replace `<YOUR_PRIVATE_KEY>` with the private key from Anvil.
+Replace `<YOUR_PRIVATE_KEY>` with the private key from Anvil. And Import the `private key` into `metamask` wallet
+
+Change RPC configuration to  `http://127.0.0.1:8545` on metamask 
 
 After deployment, you'll see the addresses of the deployed ERC20, ERC721, and ERC1155 wrapper contracts. Note these addresses as you'll need them to interact with the front end.
 
-### 5. Update `app.js` with Deployed Contract Addresses
-
-Open `app.js` and update the contract addresses and the private key from Anvil:
-
-```javascript
-const wrapperAddress = "<DEPLOYED_WRAPPER_CONTRACT_ADDRESS>";
-const privateKey = "<ANVIL_PRIVATE_KEY>";
-```
-
-### 6. Start the Front-End
+### 5. Start the Front-End
 
 Use a live server to start the HTML file and interact with the deployed contracts:
 
@@ -63,7 +56,7 @@ Use a live server to start the HTML file and interact with the deployed contract
 
 This will open the front end in your default browser.
 
-### 7. Interact with the Contracts
+### 6. Interact with the Contracts
 
 You can now interact with the ERC20 and ERC721 contracts and see the results on the front end:
 
@@ -71,7 +64,7 @@ You can now interact with the ERC20 and ERC721 contracts and see the results on 
 - **Deposit ERC721:** Fill in the form with the ERC721 contract address, token ID, and data, then submit.
 - **Get Token URI:** Input the token ID and retrieve the URI.
 
-### 8. Testing the Project
+### 7. Testing the Project
 
 If you want to test the project further, you can use the following commands:
 
